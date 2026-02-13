@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { HighlightRange, SelectionState } from '../types';
 import { getColumnLetter, isCellInRange } from '../utils/cellUtils';
@@ -11,7 +10,7 @@ interface VirtualizedGridProps {
 }
 
 const CELL_WIDTH = 100;
-const CELL_HEIGHT = 22; // Google Sheets standard is roughly 22-25px
+const CELL_HEIGHT = 22; 
 const HEADER_WIDTH = 46;
 const HEADER_HEIGHT = 22;
 
@@ -20,7 +19,7 @@ const VirtualizedGrid: React.FC<VirtualizedGridProps> = ({ data, selection, onSe
   const [scroll, setScroll] = useState({ top: 0, left: 0 });
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
 
-  // Ensure grid is at least a minimum size
+  // Ensure grid is at least a minimum size for viewing
   const numRows = Math.max(data.length, 100);
   const numCols = Math.max(data[0]?.length || 0, 26);
 
@@ -35,8 +34,18 @@ const VirtualizedGrid: React.FC<VirtualizedGridProps> = ({ data, selection, onSe
 
   useEffect(() => {
     updateViewport();
+    
+    // Use ResizeObserver for more reliable layout updates
+    const observer = new ResizeObserver(updateViewport);
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+    
     window.addEventListener('resize', updateViewport);
-    return () => window.removeEventListener('resize', updateViewport);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateViewport);
+    };
   }, [updateViewport]);
 
   const onScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -48,7 +57,7 @@ const VirtualizedGrid: React.FC<VirtualizedGridProps> = ({ data, selection, onSe
 
   const visibleRows = useMemo(() => {
     const start = Math.floor(scroll.top / CELL_HEIGHT);
-    const count = Math.ceil(viewport.height / CELL_HEIGHT) + 3;
+    const count = Math.ceil((viewport.height || window.innerHeight) / CELL_HEIGHT) + 5;
     const result = [];
     for (let i = 0; i < count; i++) {
       if (start + i < numRows) result.push(start + i);
@@ -58,7 +67,7 @@ const VirtualizedGrid: React.FC<VirtualizedGridProps> = ({ data, selection, onSe
 
   const visibleCols = useMemo(() => {
     const start = Math.floor(scroll.left / CELL_WIDTH);
-    const count = Math.ceil(viewport.width / CELL_WIDTH) + 3;
+    const count = Math.ceil((viewport.width || window.innerWidth) / CELL_WIDTH) + 5;
     const result = [];
     for (let i = 0; i < count; i++) {
       if (start + i < numCols) result.push(start + i);
@@ -88,11 +97,11 @@ const VirtualizedGrid: React.FC<VirtualizedGridProps> = ({ data, selection, onSe
         }}>
           
           {/* Column Headers (Sticky Top) */}
-          <div className="sticky top-0 z-30 h-[22px] bg-white" style={{ marginLeft: HEADER_WIDTH }}>
+          <div className="sticky top-0 z-30 h-[22px] bg-white flex" style={{ marginLeft: HEADER_WIDTH }}>
             {visibleCols.map(colIdx => (
               <div 
                 key={`col-${colIdx}`}
-                className={`grid-header absolute h-[22px] ${selection.range && colIdx >= selection.range.startCol && colIdx <= selection.range.endCol ? 'active' : ''}`}
+                className={`grid-header absolute h-[22px] border-r border-b border-[#d1d5db] ${selection.range && colIdx >= selection.range.startCol && colIdx <= selection.range.endCol ? 'active' : ''}`}
                 style={{ width: CELL_WIDTH, left: colIdx * CELL_WIDTH }}
               >
                 {getColumnLetter(colIdx)}
@@ -105,7 +114,7 @@ const VirtualizedGrid: React.FC<VirtualizedGridProps> = ({ data, selection, onSe
             {visibleRows.map(rowIdx => (
               <div 
                 key={`row-${rowIdx}`}
-                className={`grid-header absolute w-[46px] ${selection.range && rowIdx >= selection.range.startRow && rowIdx <= selection.range.endRow ? 'active' : ''}`}
+                className={`grid-header absolute w-[46px] border-r border-b border-[#d1d5db] ${selection.range && rowIdx >= selection.range.startRow && rowIdx <= selection.range.endRow ? 'active' : ''}`}
                 style={{ height: CELL_HEIGHT, top: rowIdx * CELL_HEIGHT }}
               >
                 {rowIdx + 1}
@@ -139,6 +148,7 @@ const VirtualizedGrid: React.FC<VirtualizedGridProps> = ({ data, selection, onSe
                         left: colIdx * CELL_WIDTH, 
                         top: rowIdx * CELL_HEIGHT 
                       }}
+                      title={val !== undefined ? String(val) : ''}
                     >
                       {val !== undefined ? String(val) : ''}
                     </div>

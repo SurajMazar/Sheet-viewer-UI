@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { 
@@ -40,20 +39,40 @@ const App: React.FC = () => {
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const readWorkbook = XLSX.read(data, { type: 'array' });
+        const readWorkbook = XLSX.read(data, { type: 'array', cellDates: true, cellNF: true, cellStyles: true });
         
         const sheets: SheetData[] = readWorkbook.SheetNames.map((name) => {
           const sheet = readWorkbook.Sheets[name];
-          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" }) as any[][];
+          
+          // Determine the sheet range. 
+          // If we want data to align with Excel row numbers (1-indexed), 
+          // we must ensure the array starts from Row 1 (index 0).
+          const ref = sheet['!ref'] || "A1:A1";
+          const decode = XLSX.utils.decode_range(ref);
+          
+          // Force range to start from A1 (row 0, col 0) to prevent skipping leading blank rows
+          const rows = XLSX.utils.sheet_to_json(sheet, { 
+            header: 1, 
+            defval: "", 
+            blankrows: true,
+            range: 0 // Start from A1
+          }) as any[][];
+
+          const maxCols = rows.reduce((max, row) => Math.max(max, row?.length || 0), decode.e.c + 1);
+
           return {
             name,
             data: rows,
-            dimensions: { rows: rows.length, cols: rows[0]?.length || 0 }
+            dimensions: { 
+              rows: rows.length, 
+              cols: maxCols
+            }
           };
         });
 
         setWorkbook({ fileName: file.name, sheets });
         setActiveSheetIndex(0);
+        setSelection({ activeCell: null, range: null });
       } catch (err) {
         console.error("Parsing error:", err);
         alert("Could not parse file. Ensure it is a valid Excel or CSV document.");
@@ -186,7 +205,7 @@ const App: React.FC = () => {
                     <button
                       key={sheet.name}
                       onClick={() => setActiveSheetIndex(idx)}
-                      className={`h-full px-5 text-xs font-medium transition-all flex items-center border-x border-transparent relative ${
+                      className={`h-full px-5 text-xs font-medium transition-all flex items-center border-x border-transparent relative whitespace-nowrap ${
                         activeSheetIndex === idx 
                           ? 'text-green-700 bg-green-50/50 after:content-[""] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[3px] after:bg-green-600' 
                           : 'text-gray-500 hover:bg-gray-50'
@@ -210,9 +229,9 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* 4. Small Status Footer */}
+      {/* 4. Status Footer */}
       {workbook && (
-        <footer className="h-6 bg-white border-t flex items-center px-4 justify-between text-[10px] text-gray-400 font-medium">
+        <footer className="h-6 bg-white border-t flex items-center px-4 justify-between text-[10px] text-gray-400 font-medium shrink-0">
           <div className="flex items-center gap-3">
              <span className="text-green-600 font-bold uppercase tracking-wider">SheetLens Engine</span>
              <span>•</span>
@@ -220,8 +239,8 @@ const App: React.FC = () => {
           </div>
           <div className="flex items-center gap-4">
              <span className="text-gray-500 uppercase">{selection.range ? formatRange(selection.range) : ""}</span>
-             <span>Rows: {activeSheet?.dimensions.rows.toLocaleString()}</span>
-             <span>Cols: {activeSheet?.dimensions.cols.toLocaleString()}</span>
+             <span>Rows: {activeSheet?.dimensions.rows.toLocaleString() || 0}</span>
+             <span>Cols: {activeSheet?.dimensions.cols.toLocaleString() || 0}</span>
           </div>
         </footer>
       )}
