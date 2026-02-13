@@ -12,53 +12,73 @@
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
             overflow: hidden;
+            margin: 0;
         }
-        /* Custom scrollbar for spreadsheet appearance */
+        /* Spreadsheet Scrollbar */
         ::-webkit-scrollbar {
-            width: 14px;
-            height: 14px;
+            width: 12px;
+            height: 12px;
         }
         ::-webkit-scrollbar-track {
             background: #f1f1f1;
-            border: 1px solid #e5e7eb;
+            border-left: 1px solid #e5e7eb;
+            border-top: 1px solid #e5e7eb;
         }
         ::-webkit-scrollbar-thumb {
             background: #cbd5e1;
-            border: 3px solid #f1f1f1;
-            border-radius: 10px;
+            border: 2px solid #f1f1f1;
+            border-radius: 6px;
         }
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+
+        /* Sheets UI Specifics */
         .grid-header {
             background-color: #f8f9fa;
             color: #5f6368;
+            font-size: 11px;
             font-weight: 500;
             user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-right: 1px solid #d1d5db;
+            border-bottom: 1px solid #d1d5db;
         }
-        .cell-selected {
-            background-color: rgba(26, 115, 232, 0.1);
+        .grid-header.active {
+            background-color: #e8eaed;
+            color: #1a73e8;
+        }
+
+        .cell-active {
             outline: 2px solid #1a73e8;
             outline-offset: -2px;
             z-index: 10;
         }
-        .cell-highlighted {
-            background-color: rgba(26, 115, 232, 0.05);
+        .cell-in-range {
+            background-color: rgba(26, 115, 232, 0.08);
         }
-        .formula-bar-input:focus {
-            outline: none;
-            box-shadow: none;
+        
+        /* Hide scrollbar for tabs */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
     </style>
 <script type="importmap">
 {
   "imports": {
-    "xlsx": "https://esm.sh/xlsx@^0.18.5",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4",
-    "lucide-react": "https://esm.sh/lucide-react@^0.564.0",
+    "xlsx": "https://esm.sh/xlsx@0.18.5",
+    "react": "https://esm.sh/react@19.2.4",
+    "react-dom": "https://esm.sh/react-dom@19.2.4",
+    "lucide-react": "https://esm.sh/lucide-react@0.454.0",
+    "recharts": "https://esm.sh/recharts@2.12.0",
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "recharts": "https://esm.sh/recharts@^2.12.0"
+    "react/": "https://esm.sh/react@^19.2.4/"
   }
 }
 </script>
