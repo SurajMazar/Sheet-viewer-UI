@@ -1,0 +1,5 @@
+{
+  "name": "SheetLens: Professional Excel & CSV Viewer",
+  "description": "A high-performance spreadsheet viewer that parses Excel and CSV files with support for multiple sheets, intelligent range highlighting, and data insights.",
+  "requestFramePermissions": []
+}
